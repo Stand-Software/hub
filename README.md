@@ -30,11 +30,19 @@ end
 function Library:CreateWindow(cfg)
     local Window = {}
     
+    -- Tenta encontrar o CoreGui (comum em executores) para ficar acima do menu ESC
+    local targetParent = playerGui
+    local s, e = pcall(function()
+        targetParent = game:GetService("CoreGui")
+    end)
+
     local gui = create("ScreenGui", {
         Name = "XanaxHub_V2",
         ResetOnSpawn = false,
-        Parent = playerGui,
-        IgnoreGuiInset = true
+        Parent = targetParent,
+        IgnoreGuiInset = true,
+        DisplayOrder = 2147483647, -- Ordem máxima para ficar por cima de tudo
+        ZIndexBehavior = Enum.ZIndexBehavior.Global
     })
 
     local main = create("Frame", {
@@ -49,9 +57,8 @@ function Library:CreateWindow(cfg)
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
     create("UIStroke", {Color = theme.stroke, Thickness = 1.5, Parent = main})
 
-    -- Lógica para fechar/abrir com RightShift, Delete ou Insert
+    -- Lógica para fechar/abrir com RightShift
     UIS.InputBegan:Connect(function(input, gpe)
-        -- Permitimos o toggle mesmo se gpe for true para garantir que funciona sempre
         if input.KeyCode == Enum.KeyCode.RightShift then
             main.Visible = not main.Visible
         end
