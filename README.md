@@ -7,8 +7,6 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local connections = {}
-
 local theme = {
     bg = Color3.fromRGB(12, 12, 14),
     sidebar = Color3.fromRGB(18, 18, 22),
@@ -167,7 +165,6 @@ function Library:CreateWindow(cfg)
             end)
         end
 
-        -- NOVA FUNÇÃO: CreateKeybind (Ricardo 💖)
         function Tab:CreateKeybind(cfg)
             local key = cfg.Default or Enum.KeyCode.F
             local holder = create("TextButton", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = theme.element, AutoButtonColor = false, Text = "", Parent = page})
@@ -176,7 +173,7 @@ function Library:CreateWindow(cfg)
             
             create("TextLabel", {Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = holder})
             
-            local keyLabel = create("TextLabel", {Size = UDim2.new(0, 80, 0, 30), Position = UDim2.new(1, -95, 0.5, -15), BackgroundColor3 = theme.bg, Text = key.Name, TextColor3 = theme.accent, Font = Enum.Font.GothamMedium, TextSize = 13, Parent = holder})
+            local keyLabel = create("TextLabel", {Size = UDim2.new(0, 80, 0, 30), Position = UDim2.new(1, -95, 0.5, -15), BackgroundColor3 = theme.bg, Text = (typeof(key) == "EnumItem" and key.Name or "Mouse2"), TextColor3 = theme.accent, Font = Enum.Font.GothamMedium, TextSize = 13, Parent = holder})
             create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = keyLabel})
             create("UIStroke", {Color = theme.stroke, Parent = keyLabel})
 
@@ -187,16 +184,18 @@ function Library:CreateWindow(cfg)
             end)
 
             UIS.InputBegan:Connect(function(input)
-                if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
-                    key = input.KeyCode
-                    keyLabel.Text = key.Name
-                    waiting = false
-                    if cfg.Callback then cfg.Callback(key) end
-                elseif waiting and input.UserInputType == Enum.UserInputType.MouseButton2 then
-                    key = Enum.UserInputType.MouseButton2
-                    keyLabel.Text = "Mouse2"
-                    waiting = false
-                    if cfg.Callback then cfg.Callback(key) end
+                if waiting then
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        key = input.KeyCode
+                        keyLabel.Text = key.Name
+                        waiting = false
+                        if cfg.Callback then cfg.Callback(key) end
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        key = Enum.UserInputType.MouseButton2
+                        keyLabel.Text = "Mouse2"
+                        waiting = false
+                        if cfg.Callback then cfg.Callback(key) end
+                    end
                 end
             end)
         end
