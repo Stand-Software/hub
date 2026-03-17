@@ -1,5 +1,3 @@
-return function()
-
 local Library = {}
 
 -- Services
@@ -77,7 +75,7 @@ function Library:CreateWindow(cfg)
 
     local pages = {}
 
-    -- Toggle UI (RightShift)
+    -- Toggle UI
     UIS.InputBegan:Connect(function(input, gp)
         if gp then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
@@ -155,7 +153,6 @@ function Library:CreateWindow(cfg)
             page.Visible = true
         end
 
-        -- Toggle (Checkbox)
         function Tab:CreateToggle(cfg)
             local state = cfg.Default or false
 
@@ -186,5 +183,3 @@ function Library:CreateWindow(cfg)
 end
 
 return Library
-
-end
