@@ -49,9 +49,10 @@ function Library:CreateWindow(cfg)
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
     create("UIStroke", {Color = theme.stroke, Thickness = 1.5, Parent = main})
 
-    -- Lógica para fechar/abrir com RightShift
+    -- Lógica para fechar/abrir com RightShift, Delete ou Insert
     UIS.InputBegan:Connect(function(input, gpe)
-        if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
+        -- Permitimos o toggle mesmo se gpe for true para garantir que funciona sempre
+        if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.Delete or input.KeyCode == Enum.KeyCode.Insert then
             main.Visible = not main.Visible
         end
     end)
