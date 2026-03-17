@@ -1,21 +1,22 @@
 local Library = {}
 
--- Services
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Theme
+local connections = {}
+
 local theme = {
-    bg = Color3.fromRGB(18,18,22),
-    light = Color3.fromRGB(28,28,32),
+    bg = Color3.fromRGB(20,20,25),
+    sidebar = Color3.fromRGB(25,25,30),
+    element = Color3.fromRGB(30,30,35),
     accent = Color3.fromRGB(255,0,80),
-    text = Color3.fromRGB(255,255,255)
+    text = Color3.fromRGB(255,255,255),
+    subtext = Color3.fromRGB(170,170,170)
 }
 
--- Helper
 local function create(class, props)
     local obj = Instance.new(class)
     for i,v in pairs(props) do
@@ -24,7 +25,6 @@ local function create(class, props)
     return obj
 end
 
--- Window
 function Library:CreateWindow(cfg)
     local Window = {}
 
@@ -35,55 +35,64 @@ function Library:CreateWindow(cfg)
     })
 
     local main = create("Frame", {
-        Size = UDim2.new(0, 420, 0, 300),
-        Position = UDim2.new(0.5, -210, 0.5, -150),
+        Size = UDim2.new(0, 500, 0, 320),
+        Position = UDim2.new(0.5, -250, 0.5, -160),
         BackgroundColor3 = theme.bg,
         Parent = gui
     })
 
-    create("UICorner", {CornerRadius = UDim.new(0,10), Parent = main})
-    create("UIStroke", {Color = theme.accent, Thickness = 2, Parent = main})
+    create("UICorner", {CornerRadius = UDim.new(0,12), Parent = main})
+    create("UIStroke", {Color = theme.accent, Thickness = 1.5, Parent = main})
 
     local title = create("TextLabel", {
-        Size = UDim2.new(1,0,0,40),
+        Size = UDim2.new(1,0,0,45),
         BackgroundTransparency = 1,
-        Text = cfg.Title or "Window",
+        Text = cfg.Title or "Xanax Hub",
         TextColor3 = theme.text,
         Font = Enum.Font.GothamBold,
-        TextSize = 18,
+        TextSize = 20,
         Parent = main
     })
 
-    local tabBar = create("Frame", {
-        Size = UDim2.new(0,120,1,-40),
-        Position = UDim2.new(0,0,0,40),
-        BackgroundColor3 = theme.light,
+    local sidebar = create("Frame", {
+        Size = UDim2.new(0,140,1,-45),
+        Position = UDim2.new(0,0,0,45),
+        BackgroundColor3 = theme.sidebar,
         Parent = main
     })
 
     local content = create("Frame", {
-        Size = UDim2.new(1,-120,1,-40),
-        Position = UDim2.new(0,120,0,40),
+        Size = UDim2.new(1,-140,1,-45),
+        Position = UDim2.new(0,140,0,45),
         BackgroundTransparency = 1,
         Parent = main
     })
 
     create("UIListLayout", {
-        Parent = tabBar,
-        SortOrder = Enum.SortOrder.LayoutOrder
+        Parent = sidebar,
+        Padding = UDim.new(0,5)
     })
 
     local pages = {}
+    local currentTab = nil
 
-    -- Toggle UI
-    UIS.InputBegan:Connect(function(input, gp)
+    -- TOGGLE UI (SHIFT)
+    table.insert(connections, UIS.InputBegan:Connect(function(input, gp)
         if gp then return end
+
         if input.KeyCode == Enum.KeyCode.RightShift then
             main.Visible = not main.Visible
         end
-    end)
 
-    -- Drag
+        if input.KeyCode == Enum.KeyCode.Delete then
+            gui:Destroy()
+            for _,c in pairs(connections) do
+                pcall(function() c:Disconnect() end)
+            end
+        end
+    end))
+
+    -- DRAG
     local dragging, dragStart, startPos
 
     main.InputBegan:Connect(function(input)
@@ -112,18 +121,17 @@ function Library:CreateWindow(cfg)
         end
     end)
 
-    -- Tabs
     function Window:CreateTab(name)
         local Tab = {}
 
-        local btn = create("TextButton", {
+        local tabBtn = create("TextButton", {
             Size = UDim2.new(1,0,0,40),
             Text = name,
-            BackgroundColor3 = theme.light,
-            TextColor3 = theme.text,
+            BackgroundColor3 = theme.sidebar,
+            TextColor3 = theme.subtext,
             Font = Enum.Font.Gotham,
             TextSize = 14,
-            Parent = tabBar
+            Parent = sidebar
         })
 
         local page = create("ScrollingFrame", {
@@ -137,41 +145,85 @@ function Library:CreateWindow(cfg)
 
         local layout = create("UIListLayout", {
             Parent = page,
-            Padding = UDim.new(0,6)
+            Padding = UDim.new(0,8)
         })
 
         table.insert(pages, page)
 
-        btn.MouseButton1Click:Connect(function()
+        local function selectTab()
             for _,p in pairs(pages) do
                 p.Visible = false
             end
-            page.Visible = true
-        end)
 
-        if #pages == 1 then
             page.Visible = true
+            currentTab = tabBtn
+
+            for _,b in pairs(sidebar:GetChildren()) do
+                if b:IsA("TextButton") then
+                    b.TextColor3 = theme.subtext
+                end
+            end
+
+            tabBtn.TextColor3 = theme.text
+        end
+
+        tabBtn.MouseButton1Click:Connect(selectTab)
+
+        if not currentTab then
+            selectTab()
         end
 
         function Tab:CreateToggle(cfg)
             local state = cfg.Default or false
 
-            local toggle = create("TextButton", {
+            local holder = create("Frame", {
                 Size = UDim2.new(1,-10,0,40),
-                Text = cfg.Name .. " : " .. (state and "ON" or "OFF"),
-                BackgroundColor3 = theme.light,
-                TextColor3 = theme.text,
+                BackgroundColor3 = theme.element,
                 Parent = page
             })
 
-            create("UICorner", {CornerRadius = UDim.new(0,8), Parent = toggle})
+            create("UICorner", {CornerRadius = UDim.new(0,8), Parent = holder})
 
-            toggle.MouseButton1Click:Connect(function()
-                state = not state
-                toggle.Text = cfg.Name .. " : " .. (state and "ON" or "OFF")
+            local label = create("TextLabel", {
+                Size = UDim2.new(1,-60,1,0),
+                Position = UDim2.new(0,10,0,0),
+                BackgroundTransparency = 1,
+                Text = cfg.Name,
+                TextColor3 = theme.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = holder
+            })
 
-                if cfg.Callback then
-                    cfg.Callback(state)
+            local toggleBtn = create("Frame", {
+                Size = UDim2.new(0,40,0,20),
+                Position = UDim2.new(1,-50,0.5,-10),
+                BackgroundColor3 = state and theme.accent or Color3.fromRGB(60,60,60),
+                Parent = holder
+            })
+
+            create("UICorner", {CornerRadius = UDim.new(1,0), Parent = toggleBtn})
+
+            local circle = create("Frame", {
+                Size = UDim2.new(0,16,0,16),
+                Position = state and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8),
+                BackgroundColor3 = Color3.fromRGB(255,255,255),
+                Parent = toggleBtn
+            })
+
+            create("UICorner", {CornerRadius = UDim.new(1,0), Parent = circle})
+
+            holder.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    state = not state
+
+                    toggleBtn.BackgroundColor3 = state and theme.accent or Color3.fromRGB(60,60,60)
+                    circle.Position = state and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
+
+                    if cfg.Callback then
+                        cfg.Callback(state)
+                    end
                 end
             end)
         end
