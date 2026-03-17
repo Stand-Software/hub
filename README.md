@@ -52,7 +52,7 @@ function Library:CreateWindow(cfg)
     -- Lógica para fechar/abrir com RightShift, Delete ou Insert
     UIS.InputBegan:Connect(function(input, gpe)
         -- Permitimos o toggle mesmo se gpe for true para garantir que funciona sempre
-        if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.Delete or input.KeyCode == Enum.KeyCode.Insert then
+        if input.KeyCode == Enum.KeyCode.RightShift then
             main.Visible = not main.Visible
         end
     end)
