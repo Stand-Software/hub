@@ -126,7 +126,6 @@ function Library:CreateWindow(cfg)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
 
-    -- Atalhos: RightShift (Menu) / Delete (Kill App)
     table.insert(connections, UIS.InputBegan:Connect(function(input, gp)
         if gp then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
@@ -224,25 +223,40 @@ function Library:CreateWindow(cfg)
             UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
         end
 
-        function Tab:CreateKeybind(cfg)
-            local boundKey = cfg.Default or Enum.KeyCode.F
-            local listening = false
-            local holder = create("Frame", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = theme.element, Parent = page})
+        function Tab:CreateColorPicker(cfg)
+            local color = cfg.Default or Color3.fromRGB(255, 0, 85)
+            local holder = create("TextButton", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = theme.element, AutoButtonColor = false, Text = "", Parent = page})
             create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = holder})
             create("UIStroke", {Color = theme.stroke, Parent = holder})
-            create("TextLabel", {Size = UDim2.new(1, -100, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = holder})
-            local bindBtn = create("TextButton", {Size = UDim2.new(0, 80, 0, 30), Position = UDim2.new(1, -95, 0.5, -15), BackgroundColor3 = theme.bg, Text = boundKey.Name, TextColor3 = theme.accent, Font = Enum.Font.GothamMedium, TextSize = 12, Parent = holder})
-            create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = bindBtn})
+            create("TextLabel", {Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = holder})
+            
+            local preview = create("Frame", {Size = UDim2.new(0, 30, 0, 20), Position = UDim2.new(1, -45, 0.5, -10), BackgroundColor3 = color, Parent = holder})
+            create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = preview})
 
-            bindBtn.MouseButton1Click:Connect(function() listening = true bindBtn.Text = "..." end)
-            UIS.InputBegan:Connect(function(input)
-                if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-                    boundKey = input.KeyCode
-                    bindBtn.Text = boundKey.Name
-                    listening = false
-                elseif not listening and input.KeyCode == boundKey then
-                    if cfg.Callback then cfg.Callback() end
-                end
+            local pickerOpen = false
+            local pickerFrame = create("Frame", {Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = theme.element, Visible = false, ClipsDescendants = true, Parent = page})
+            create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = pickerFrame})
+            create("UIStroke", {Color = theme.stroke, Parent = pickerFrame})
+
+            local hueBar = create("Frame", {Size = UDim2.new(1, -30, 0, 10), Position = UDim2.new(0, 15, 0.5, -5), Parent = pickerFrame})
+            local gradient = create("UIGradient", {Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromHSV(0, 1, 1)), ColorSequenceKeypoint.new(0.16, Color3.fromHSV(0.16, 1, 1)), ColorSequenceKeypoint.new(0.33, Color3.fromHSV(0.33, 1, 1)), ColorSequenceKeypoint.new(0.5, Color3.fromHSV(0.5, 1, 1)), ColorSequenceKeypoint.new(0.66, Color3.fromHSV(0.66, 1, 1)), ColorSequenceKeypoint.new(0.83, Color3.fromHSV(0.83, 1, 1)), ColorSequenceKeypoint.new(1, Color3.fromHSV(1, 1, 1))}), Parent = hueBar})
+            create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = hueBar})
+
+            local function updateHue(input)
+                local pos = math.clamp((input.Position.X - hueBar.AbsolutePosition.X) / hueBar.AbsoluteSize.X, 0, 1)
+                color = Color3.fromHSV(pos, 1, 1)
+                preview.BackgroundColor3 = color
+                if cfg.Callback then cfg.Callback(color) end
+            end
+
+            local sliding = false
+            hueBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true updateHue(input) end end)
+            UIS.InputChanged:Connect(function(input) if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then updateHue(input) end end)
+            UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
+
+            holder.MouseButton1Click:Connect(function()
+                pickerOpen = not pickerOpen
+                pickerFrame.Visible = pickerOpen
             end)
         end
 
