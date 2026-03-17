@@ -1,6 +1,6 @@
 return function()
 
-local XanaxUI = {}
+local Library = {}
 
 -- Services
 local UIS = game:GetService("UserInputService")
@@ -11,15 +11,15 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- Theme
 local theme = {
-    bg = Color3.fromRGB(15,15,20),
-    lightbg = Color3.fromRGB(25,25,30),
+    bg = Color3.fromRGB(18,18,22),
+    light = Color3.fromRGB(28,28,32),
     accent = Color3.fromRGB(255,0,80),
     text = Color3.fromRGB(255,255,255)
 }
 
--- Utils
-local function create(instance, props)
-    local obj = Instance.new(instance)
+-- Helper
+local function create(class, props)
+    local obj = Instance.new(class)
     for i,v in pairs(props) do
         obj[i] = v
     end
@@ -27,29 +27,29 @@ local function create(instance, props)
 end
 
 -- Window
-function XanaxUI:CreateWindow(config)
+function Library:CreateWindow(cfg)
     local Window = {}
-    
-    local screenGui = create("ScreenGui", {
-        Name = "XanaxUI",
+
+    local gui = create("ScreenGui", {
+        Name = "XanaxHub",
         ResetOnSpawn = false,
         Parent = playerGui
     })
 
     local main = create("Frame", {
-        Size = UDim2.new(0, 500, 0, 350),
-        Position = UDim2.new(0.5, -250, 0.5, -175),
+        Size = UDim2.new(0, 420, 0, 300),
+        Position = UDim2.new(0.5, -210, 0.5, -150),
         BackgroundColor3 = theme.bg,
-        Parent = screenGui
+        Parent = gui
     })
-    
+
     create("UICorner", {CornerRadius = UDim.new(0,10), Parent = main})
     create("UIStroke", {Color = theme.accent, Thickness = 2, Parent = main})
 
     local title = create("TextLabel", {
         Size = UDim2.new(1,0,0,40),
         BackgroundTransparency = 1,
-        Text = config.Title or "XanaxUI",
+        Text = cfg.Title or "Window",
         TextColor3 = theme.text,
         Font = Enum.Font.GothamBold,
         TextSize = 18,
@@ -59,7 +59,7 @@ function XanaxUI:CreateWindow(config)
     local tabBar = create("Frame", {
         Size = UDim2.new(0,120,1,-40),
         Position = UDim2.new(0,0,0,40),
-        BackgroundColor3 = theme.lightbg,
+        BackgroundColor3 = theme.light,
         Parent = main
     })
 
@@ -70,14 +70,14 @@ function XanaxUI:CreateWindow(config)
         Parent = main
     })
 
-    local tabLayout = create("UIListLayout", {
+    create("UIListLayout", {
         Parent = tabBar,
         SortOrder = Enum.SortOrder.LayoutOrder
     })
 
     local pages = {}
 
-    -- Toggle UI
+    -- Toggle UI (RightShift)
     UIS.InputBegan:Connect(function(input, gp)
         if gp then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
@@ -117,11 +117,11 @@ function XanaxUI:CreateWindow(config)
     -- Tabs
     function Window:CreateTab(name)
         local Tab = {}
-        
-        local button = create("TextButton", {
+
+        local btn = create("TextButton", {
             Size = UDim2.new(1,0,0,40),
             Text = name,
-            BackgroundColor3 = theme.lightbg,
+            BackgroundColor3 = theme.light,
             TextColor3 = theme.text,
             Font = Enum.Font.Gotham,
             TextSize = 14,
@@ -131,7 +131,7 @@ function XanaxUI:CreateWindow(config)
         local page = create("ScrollingFrame", {
             Size = UDim2.new(1,0,1,0),
             CanvasSize = UDim2.new(0,0,0,0),
-            ScrollBarThickness = 3,
+            ScrollBarThickness = 4,
             Visible = false,
             BackgroundTransparency = 1,
             Parent = content
@@ -139,12 +139,12 @@ function XanaxUI:CreateWindow(config)
 
         local layout = create("UIListLayout", {
             Parent = page,
-            Padding = UDim.new(0,8)
+            Padding = UDim.new(0,6)
         })
 
-        pages[#pages+1] = page
+        table.insert(pages, page)
 
-        button.MouseButton1Click:Connect(function()
+        btn.MouseButton1Click:Connect(function()
             for _,p in pairs(pages) do
                 p.Visible = false
             end
@@ -155,32 +155,14 @@ function XanaxUI:CreateWindow(config)
             page.Visible = true
         end
 
-        -- Components
-        function Tab:CreateButton(cfg)
-            local btn = create("TextButton", {
-                Size = UDim2.new(1,-10,0,40),
-                Text = cfg.Name,
-                BackgroundColor3 = theme.lightbg,
-                TextColor3 = theme.text,
-                Parent = page
-            })
-
-            create("UICorner", {CornerRadius = UDim.new(0,8), Parent = btn})
-
-            btn.MouseButton1Click:Connect(function()
-                if cfg.Callback then
-                    cfg.Callback()
-                end
-            end)
-        end
-
+        -- Toggle (Checkbox)
         function Tab:CreateToggle(cfg)
             local state = cfg.Default or false
 
             local toggle = create("TextButton", {
                 Size = UDim2.new(1,-10,0,40),
                 Text = cfg.Name .. " : " .. (state and "ON" or "OFF"),
-                BackgroundColor3 = theme.lightbg,
+                BackgroundColor3 = theme.light,
                 TextColor3 = theme.text,
                 Parent = page
             })
@@ -190,7 +172,7 @@ function XanaxUI:CreateWindow(config)
             toggle.MouseButton1Click:Connect(function()
                 state = not state
                 toggle.Text = cfg.Name .. " : " .. (state and "ON" or "OFF")
-                
+
                 if cfg.Callback then
                     cfg.Callback(state)
                 end
@@ -203,6 +185,6 @@ function XanaxUI:CreateWindow(config)
     return Window
 end
 
-return XanaxUI
+return Library
 
 end
