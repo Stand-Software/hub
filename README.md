@@ -69,14 +69,6 @@ function Library:CreateWindow(cfg)
         Parent = header
     })
 
-    create("Frame", {
-        Size = UDim2.new(1, 0, 0, 1),
-        Position = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = theme.stroke,
-        BorderSizePixel = 0,
-        Parent = header
-    })
-
     local sidebar = create("Frame", {
         Size = UDim2.new(0, 190, 1, -61),
         Position = UDim2.new(0, 0, 0, 61),
@@ -86,7 +78,7 @@ function Library:CreateWindow(cfg)
     })
     
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = sidebar})
-    create("Frame", {Size = UDim2.new(0, 20, 1, 0), Position = UDim2.new(1, -20, 0, 0), BackgroundColor3 = theme.sidebar, BorderSizePixel = 0, Parent = sidebar})
+    local sidebarFix = create("Frame", {Size = UDim2.new(0, 20, 1, 0), Position = UDim2.new(1, -20, 0, 0), BackgroundColor3 = theme.sidebar, BorderSizePixel = 0, Parent = sidebar})
 
     local tabContainer = create("ScrollingFrame", {
         Size = UDim2.new(1, 0, 1, -20),
@@ -107,7 +99,6 @@ function Library:CreateWindow(cfg)
 
     local pages = {}
     
-    -- Dragging
     local dragging, dragStart, startPos
     header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -126,16 +117,6 @@ function Library:CreateWindow(cfg)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
 
-    table.insert(connections, UIS.InputBegan:Connect(function(input, gp)
-        if gp then return end
-        if input.KeyCode == Enum.KeyCode.RightShift then
-            main.Visible = not main.Visible
-        elseif input.KeyCode == Enum.KeyCode.Delete then
-            gui:Destroy()
-            for _, c in pairs(connections) do pcall(function() c:Disconnect() end) end
-        end
-    end))
-
     function Window:CreateTab(name)
         local Tab = {}
         local tabBtn = create("TextButton", {Size = UDim2.new(0, 170, 0, 42), BackgroundTransparency = 1, Text = name, TextColor3 = theme.subtext, Font = Enum.Font.GothamMedium, TextSize = 14, AutoButtonColor = false, Parent = tabContainer})
@@ -143,7 +124,10 @@ function Library:CreateWindow(cfg)
         local page = create("ScrollingFrame", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ScrollBarThickness = 2, Visible = false, Parent = content})
         create("UIPadding", {PaddingLeft = UDim.new(0, 25), PaddingRight = UDim.new(0, 25), PaddingTop = UDim.new(0, 25), PaddingBottom = UDim.new(0, 25), Parent = page})
         local layout = create("UIListLayout", {Parent = page, Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder})
-        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20) end)
+        
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() 
+            page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20) 
+        end)
 
         table.insert(pages, {btn = tabBtn, pg = page, ind = indicator})
 
@@ -183,6 +167,40 @@ function Library:CreateWindow(cfg)
             end)
         end
 
+        -- NOVA FUNÇÃO: CreateKeybind (Ricardo 💖)
+        function Tab:CreateKeybind(cfg)
+            local key = cfg.Default or Enum.KeyCode.F
+            local holder = create("TextButton", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = theme.element, AutoButtonColor = false, Text = "", Parent = page})
+            create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = holder})
+            create("UIStroke", {Color = theme.stroke, Parent = holder})
+            
+            create("TextLabel", {Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = holder})
+            
+            local keyLabel = create("TextLabel", {Size = UDim2.new(0, 80, 0, 30), Position = UDim2.new(1, -95, 0.5, -15), BackgroundColor3 = theme.bg, Text = key.Name, TextColor3 = theme.accent, Font = Enum.Font.GothamMedium, TextSize = 13, Parent = holder})
+            create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = keyLabel})
+            create("UIStroke", {Color = theme.stroke, Parent = keyLabel})
+
+            local waiting = false
+            holder.MouseButton1Click:Connect(function()
+                waiting = true
+                keyLabel.Text = "..."
+            end)
+
+            UIS.InputBegan:Connect(function(input)
+                if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
+                    key = input.KeyCode
+                    keyLabel.Text = key.Name
+                    waiting = false
+                    if cfg.Callback then cfg.Callback(key) end
+                elseif waiting and input.UserInputType == Enum.UserInputType.MouseButton2 then
+                    key = Enum.UserInputType.MouseButton2
+                    keyLabel.Text = "Mouse2"
+                    waiting = false
+                    if cfg.Callback then cfg.Callback(key) end
+                end
+            end)
+        end
+
         function Tab:CreateButton(cfg)
             local btn = create("TextButton", {Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = theme.element, AutoButtonColor = false, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.GothamMedium, TextSize = 14, Parent = page})
             create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = btn})
@@ -190,7 +208,7 @@ function Library:CreateWindow(cfg)
             btn.MouseButton1Click:Connect(function()
                 local old = btn.BackgroundColor3
                 btn.BackgroundColor3 = theme.accent
-                wait(0.1)
+                task.wait(0.1)
                 tween(btn, 0.3, {BackgroundColor3 = old})
                 if cfg.Callback then cfg.Callback() end
             end)
