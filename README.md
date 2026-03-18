@@ -177,7 +177,6 @@ function Library:CreateWindow(cfg)
             holder.MouseButton1Click:Connect(function()
                 state = not state
                 tween(box, 0.2, {BackgroundColor3 = state and theme.accent or theme.bg})
-                if cfg.Callback then cfg.Callback(state) end
             end)
         end
 
