@@ -33,7 +33,6 @@ end
 function Library:CreateWindow(cfg)
     local Window = {}
     
-    -- Tenta encontrar o CoreGui (comum em executores) para ficar acima do menu ESC
     local targetParent = playerGui
     local s, e = pcall(function()
         targetParent = game:GetService("CoreGui")
@@ -44,7 +43,7 @@ function Library:CreateWindow(cfg)
         ResetOnSpawn = false,
         Parent = targetParent,
         IgnoreGuiInset = true,
-        DisplayOrder = 2147483647, -- Ordem máxima para ficar por cima de tudo
+        DisplayOrder = 2147483647,
         ZIndexBehavior = Enum.ZIndexBehavior.Global
     })
 
@@ -60,7 +59,6 @@ function Library:CreateWindow(cfg)
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
     create("UIStroke", {Color = theme.stroke, Thickness = 1.5, Parent = main})
 
-    -- Lógica para fechar/abrir com RightShift
     UIS.InputBegan:Connect(function(input, gpe)
         if input.KeyCode == Enum.KeyCode.RightShift then
             main.Visible = not main.Visible
@@ -171,12 +169,15 @@ function Library:CreateWindow(cfg)
             create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = holder})
             create("UIStroke", {Color = theme.stroke, Parent = holder})
             create("TextLabel", {Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = holder})
+            
+            -- Checkbox Box (Apenas o fundo agora)
             local box = create("Frame", {Size = UDim2.new(0, 22, 0, 22), Position = UDim2.new(1, -37, 0.5, -11), BackgroundColor3 = state and theme.accent or theme.bg, Parent = holder})
             create("UICorner", {CornerRadius = UDim.new(0, 5), Parent = box})
 
             holder.MouseButton1Click:Connect(function()
                 state = not state
                 tween(box, 0.2, {BackgroundColor3 = state and theme.accent or theme.bg})
+                if cfg.Callback then cfg.Callback(state) end
             end)
         end
 
