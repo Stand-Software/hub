@@ -10,12 +10,12 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- Tema Refinado (Vibe Black & Purple)
 local theme = {
-    bg = Color3.fromRGB(8, 8, 10), -- Quase preto
+    bg = Color3.fromRGB(8, 8, 10),
     sidebar = Color3.fromRGB(12, 12, 15),
     element = Color3.fromRGB(18, 18, 22),
     elementHover = Color3.fromRGB(25, 25, 30),
-    accent = Color3.fromRGB(140, 0, 255), -- Roxo vibrante
-    accentGradient = Color3.fromRGB(90, 0, 180), -- Roxo profundo para o gradiente
+    accent = Color3.fromRGB(140, 0, 255),
+    accentGradient = Color3.fromRGB(90, 0, 180),
     text = Color3.fromRGB(255, 255, 255),
     subtext = Color3.fromRGB(150, 150, 155),
     stroke = Color3.fromRGB(30, 30, 35),
@@ -47,7 +47,6 @@ function Library:CreateWindow(cfg)
         DisplayOrder = 2147483647
     })
 
-    -- Sombra suave externa
     local mainShadow = create("Frame", {
         Name = "Shadow",
         Size = UDim2.new(0, 750, 0, 500),
@@ -68,21 +67,19 @@ function Library:CreateWindow(cfg)
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
     create("UIStroke", {Color = theme.stroke, Thickness = 1.2, Parent = main})
 
-    -- Alternar Visibilidade
     UIS.InputBegan:Connect(function(input)
         if input.KeyCode == Enum.KeyCode.RightShift then
             mainShadow.Visible = not mainShadow.Visible
         end
     end)
 
-    -- Header (Draggable)
     local header = create("Frame", {
         Size = UDim2.new(1, 0, 0, 50),
         BackgroundTransparency = 1,
         Parent = main
     })
 
-    local title = create("TextLabel", {
+    create("TextLabel", {
         Size = UDim2.new(1, -40, 1, 0),
         Position = UDim2.new(0, 20, 0, 0),
         BackgroundTransparency = 1,
@@ -94,7 +91,6 @@ function Library:CreateWindow(cfg)
         Parent = header
     })
 
-    -- Barra Lateral
     local sidebar = create("Frame", {
         Size = UDim2.new(0, 180, 1, -50),
         Position = UDim2.new(0, 0, 0, 50),
@@ -105,7 +101,7 @@ function Library:CreateWindow(cfg)
     })
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = sidebar})
     
-    local sidebarFix = create("Frame", {
+    create("Frame", {
         Size = UDim2.new(0, 20, 1, 0),
         Position = UDim2.new(1, -20, 0, 0),
         BackgroundColor3 = theme.sidebar,
@@ -130,7 +126,6 @@ function Library:CreateWindow(cfg)
         Parent = main
     })
 
-    -- Sistema de Drag
     local dragging, dragStart, startPos
     header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -220,10 +215,10 @@ function Library:CreateWindow(cfg)
         table.insert(pages, {label = tabLabel, pg = page, ind = indicator})
         if #pages == 1 then selectTab() end
 
-        -- Componentes Restaurados e Melhorados
+        -- Métodos da Aba
         
         function Tab:CreateLabel(text)
-            return create("TextLabel", {
+            local label = create("TextLabel", {
                 Size = UDim2.new(1, 0, 0, 20),
                 BackgroundTransparency = 1,
                 Text = text,
@@ -233,6 +228,11 @@ function Library:CreateWindow(cfg)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = page
             })
+            -- Adiciona suporte para SetText exigido pelo script.lua do Ricardo
+            function label:SetText(newText)
+                label.Text = newText
+            end
+            return label
         end
 
         function Tab:CreateButton(cfg)
@@ -244,9 +244,9 @@ function Library:CreateWindow(cfg)
                 Parent = page
             })
             create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = btnHolder})
-            local stroke = create("UIStroke", {Color = theme.stroke, Parent = btnHolder})
+            create("UIStroke", {Color = theme.stroke, Parent = btnHolder})
             
-            local label = create("TextLabel", {
+            create("TextLabel", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Text = cfg.Name,
@@ -351,7 +351,7 @@ function Library:CreateWindow(cfg)
                 Size = UDim2.new(0, 70, 0, 25),
                 Position = UDim2.new(1, -85, 0.5, -12),
                 BackgroundColor3 = theme.bg,
-                Text = (typeof(key) == "EnumItem" and key.Name or "None"),
+                Text = (typeof(key) == "EnumItem" and key.Name or (typeof(key) == "Enum" and tostring(key) or "None")),
                 TextColor3 = theme.accent,
                 Font = Enum.Font.GothamBold,
                 TextSize = 11,
@@ -372,6 +372,12 @@ function Library:CreateWindow(cfg)
                     if input.UserInputType == Enum.UserInputType.Keyboard then
                         key = input.KeyCode
                         keyLabel.Text = key.Name
+                        waiting = false
+                        tween(keyLabel, 0.2, {TextColor3 = theme.accent})
+                        if cfg.Callback then cfg.Callback(key) end
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        key = Enum.UserInputType.MouseButton2
+                        keyLabel.Text = "Mouse2"
                         waiting = false
                         tween(keyLabel, 0.2, {TextColor3 = theme.accent})
                         if cfg.Callback then cfg.Callback(key) end
