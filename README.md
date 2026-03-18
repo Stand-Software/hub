@@ -105,7 +105,6 @@ function Library:CreateWindow(cfg)
     })
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = sidebar})
     
-    -- Corretor de borda da sidebar (para não arredondar o lado direito)
     local sidebarFix = create("Frame", {
         Size = UDim2.new(0, 20, 1, 0),
         Position = UDim2.new(1, -20, 0, 0),
@@ -131,7 +130,7 @@ function Library:CreateWindow(cfg)
         Parent = main
     })
 
-    -- Sistema de Drag (Arrastar)
+    -- Sistema de Drag
     local dragging, dragStart, startPos
     header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -221,7 +220,21 @@ function Library:CreateWindow(cfg)
         table.insert(pages, {label = tabLabel, pg = page, ind = indicator})
         if #pages == 1 then selectTab() end
 
-        -- Componentes
+        -- Componentes Restaurados e Melhorados
+        
+        function Tab:CreateLabel(text)
+            return create("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 20),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = theme.subtext,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = page
+            })
+        end
+
         function Tab:CreateButton(cfg)
             local btnHolder = create("TextButton", {
                 Size = UDim2.new(1, 0, 0, 40),
@@ -310,6 +323,63 @@ function Library:CreateWindow(cfg)
             end)
         end
 
+        function Tab:CreateKeybind(cfg)
+            local key = cfg.Default or Enum.KeyCode.F
+            local holder = create("TextButton", {
+                Size = UDim2.new(1, 0, 0, 45),
+                BackgroundColor3 = theme.element,
+                AutoButtonColor = false,
+                Text = "",
+                Parent = page
+            })
+            create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = holder})
+            create("UIStroke", {Color = theme.stroke, Parent = holder})
+
+            create("TextLabel", {
+                Size = UDim2.new(1, -100, 1, 0),
+                Position = UDim2.new(0, 15, 0, 0),
+                BackgroundTransparency = 1,
+                Text = cfg.Name,
+                TextColor3 = theme.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = holder
+            })
+
+            local keyLabel = create("TextLabel", {
+                Size = UDim2.new(0, 70, 0, 25),
+                Position = UDim2.new(1, -85, 0.5, -12),
+                BackgroundColor3 = theme.bg,
+                Text = (typeof(key) == "EnumItem" and key.Name or "None"),
+                TextColor3 = theme.accent,
+                Font = Enum.Font.GothamBold,
+                TextSize = 11,
+                Parent = holder
+            })
+            create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = keyLabel})
+            create("UIStroke", {Color = theme.stroke, Parent = keyLabel})
+
+            local waiting = false
+            holder.MouseButton1Click:Connect(function()
+                waiting = true
+                keyLabel.Text = "..."
+                tween(keyLabel, 0.2, {TextColor3 = theme.text})
+            end)
+
+            UIS.InputBegan:Connect(function(input)
+                if waiting then
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        key = input.KeyCode
+                        keyLabel.Text = key.Name
+                        waiting = false
+                        tween(keyLabel, 0.2, {TextColor3 = theme.accent})
+                        if cfg.Callback then cfg.Callback(key) end
+                    end
+                end
+            end)
+        end
+
         function Tab:CreateSlider(cfg)
             local min, max = cfg.Min or 0, cfg.Max or 100
             local val = cfg.Default or min
@@ -373,6 +443,85 @@ function Library:CreateWindow(cfg)
             holder.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true update(input) end end)
             UIS.InputChanged:Connect(function(input) if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then update(input) end end)
             UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
+        end
+
+        function Tab:CreateColorPicker(cfg)
+            local color = cfg.Default or Color3.fromRGB(140, 0, 255)
+            local holder = create("TextButton", {
+                Size = UDim2.new(1, 0, 0, 45),
+                BackgroundColor3 = theme.element,
+                AutoButtonColor = false,
+                Text = "",
+                Parent = page
+            })
+            create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = holder})
+            create("UIStroke", {Color = theme.stroke, Parent = holder})
+
+            create("TextLabel", {
+                Size = UDim2.new(1, -60, 1, 0),
+                Position = UDim2.new(0, 15, 0, 0),
+                BackgroundTransparency = 1,
+                Text = cfg.Name,
+                TextColor3 = theme.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = holder
+            })
+
+            local preview = create("Frame", {
+                Size = UDim2.new(0, 30, 0, 18),
+                Position = UDim2.new(1, -45, 0.5, -9),
+                BackgroundColor3 = color,
+                Parent = holder
+            })
+            create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = preview})
+
+            local pickerOpen = false
+            local pickerFrame = create("Frame", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = theme.element,
+                Visible = false,
+                Parent = page
+            })
+            create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = pickerFrame})
+            create("UIStroke", {Color = theme.stroke, Parent = pickerFrame})
+
+            local hueBar = create("Frame", {
+                Size = UDim2.new(1, -30, 0, 10),
+                Position = UDim2.new(0, 15, 0.5, -5),
+                Parent = pickerFrame
+            })
+            create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = hueBar})
+            create("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromHSV(0, 1, 1)),
+                    ColorSequenceKeypoint.new(0.16, Color3.fromHSV(0.16, 1, 1)),
+                    ColorSequenceKeypoint.new(0.33, Color3.fromHSV(0.33, 1, 1)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromHSV(0.5, 1, 1)),
+                    ColorSequenceKeypoint.new(0.66, Color3.fromHSV(0.66, 1, 1)),
+                    ColorSequenceKeypoint.new(0.83, Color3.fromHSV(0.83, 1, 1)),
+                    ColorSequenceKeypoint.new(1, Color3.fromHSV(1, 1, 1))
+                }),
+                Parent = hueBar
+            })
+
+            local function updateHue(input)
+                local pos = math.clamp((input.Position.X - hueBar.AbsolutePosition.X) / hueBar.AbsoluteSize.X, 0, 1)
+                color = Color3.fromHSV(pos, 1, 1)
+                preview.BackgroundColor3 = color
+                if cfg.Callback then cfg.Callback(color) end
+            end
+
+            local sliding = false
+            hueBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true updateHue(input) end end)
+            UIS.InputChanged:Connect(function(input) if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then updateHue(input) end end)
+            UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
+
+            holder.MouseButton1Click:Connect(function()
+                pickerOpen = not pickerOpen
+                pickerFrame.Visible = pickerOpen
+            end)
         end
 
         return Tab
