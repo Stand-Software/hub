@@ -173,7 +173,7 @@ function Library:CreateWindow(cfg)
             create("TextLabel", {Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 15, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = holder})
             local box = create("Frame", {Size = UDim2.new(0, 22, 0, 22), Position = UDim2.new(1, -37, 0.5, -11), BackgroundColor3 = state and theme.accent or theme.bg, Parent = holder})
             create("UICorner", {CornerRadius = UDim.new(0, 5), Parent = box})
-            local checkmark = create("TextLabel", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "✓", TextColor3 = Color3.new(1,1,1), TextSize = 14, Visible = state, Parent = box})
+            local checkmark = create("TextLabel", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", TextColor3 = Color3.new(1,1,1), TextSize = 14, Visible = state, Parent = box})
 
             holder.MouseButton1Click:Connect(function()
                 state = not state
