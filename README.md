@@ -8,18 +8,18 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Tema Refinado (Vibe Dark/Modern)
+-- Tema Refinado (Vibe Black & Purple)
 local theme = {
-    bg = Color3.fromRGB(10, 10, 12),
-    sidebar = Color3.fromRGB(15, 15, 18),
-    element = Color3.fromRGB(20, 20, 24),
-    elementHover = Color3.fromRGB(28, 28, 32),
-    accent = Color3.fromRGB(255, 0, 100), -- Um rosa mais vibrante
-    accentGradient = Color3.fromRGB(200, 0, 150),
+    bg = Color3.fromRGB(8, 8, 10), -- Quase preto
+    sidebar = Color3.fromRGB(12, 12, 15),
+    element = Color3.fromRGB(18, 18, 22),
+    elementHover = Color3.fromRGB(25, 25, 30),
+    accent = Color3.fromRGB(140, 0, 255), -- Roxo vibrante
+    accentGradient = Color3.fromRGB(90, 0, 180), -- Roxo profundo para o gradiente
     text = Color3.fromRGB(255, 255, 255),
-    subtext = Color3.fromRGB(160, 160, 165),
-    stroke = Color3.fromRGB(35, 35, 40),
-    accentStroke = Color3.fromRGB(255, 0, 100)
+    subtext = Color3.fromRGB(150, 150, 155),
+    stroke = Color3.fromRGB(30, 30, 35),
+    accentStroke = Color3.fromRGB(140, 0, 255)
 }
 
 local function create(class, props)
