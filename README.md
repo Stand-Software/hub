@@ -40,9 +40,11 @@ local Settings = {
     SpectateRotation = 0
 }
 
--- --- BIBLIOTECA DE UI (Xanax Library Refinada) ---
--- Movida para o topo para garantir que os objetos existam antes de serem usados
-local Library = {}
+local Cache = {}
+local isAiming = false
+
+-- --- BIBLIOTECA DE UI (Xanax Library) ---
+local XanaxLib = {} -- Nomeado especificamente para evitar conflitos nil
 local theme = {
     bg = Color3.fromRGB(8, 8, 10),
     sidebar = Color3.fromRGB(12, 12, 15),
@@ -61,15 +63,21 @@ local function create(class, props)
     return obj
 end
 
+local function createDrawing(class, props)
+    local obj = Drawing.new(class)
+    for i, v in pairs(props) do obj[i] = v end
+    return obj
+end
+
 local function tween(obj, info, props)
     local t = TweenService:Create(obj, TweenInfo.new(info, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props)
     t:Play()
     return t
 end
 
-function Library:CreateWindow(cfg)
+function XanaxLib:CreateWindow(cfg)
     local Window = {CurrentTab = nil}
-    local targetParent = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
+    local targetParent = (game:GetService("CoreGui") or player:WaitForChild("PlayerGui"))
 
     local gui = create("ScreenGui", {Name = "XanaxHub_V3", Parent = targetParent, ResetOnSpawn = false})
     local mainShadow = create("Frame", {Size = UDim2.new(0, 650, 0, 450), Position = UDim2.new(0.5, -325, 0.5, -225), BackgroundColor3 = Color3.new(0,0,0), BackgroundTransparency = 0.5, Parent = gui})
@@ -80,7 +88,14 @@ function Library:CreateWindow(cfg)
     create("UIStroke", {Color = theme.stroke, Thickness = 1.2, Parent = main})
 
     local header = create("Frame", {Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1, Parent = main})
-    create("TextLabel", {Size = UDim2.new(1, -40, 1, 0), Position = UDim2.new(0, 20, 0, 0), BackgroundTransparency = 1, Text = cfg.Title or "XANAX HUB", TextColor3 = theme.text, Font = Enum.Font.GothamBold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = header})
+    local title = create("TextLabel", {Size = UDim2.new(1, -40, 1, 0), Position = UDim2.new(0, 20, 0, 0), BackgroundTransparency = 1, Text = cfg.Title or "XANAX HUB", TextColor3 = theme.text, Font = Enum.Font.GothamBold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = header})
+
+    -- Alternar visibilidade (RightShift)
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            mainShadow.Visible = not mainShadow.Visible
+        end
+    end)
 
     local sidebar = create("Frame", {Size = UDim2.new(0, 160, 1, -50), Position = UDim2.new(0, 0, 0, 50), BackgroundColor3 = theme.sidebar, Parent = main})
     create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = sidebar})
@@ -121,9 +136,9 @@ function Library:CreateWindow(cfg)
         table.insert(pages, {label = tabLabel, pg = page})
         if #pages == 1 then page.Visible = true; tabLabel.TextColor3 = theme.text end
 
-        -- Métodos da Tab corrigidos
         function Tab:CreateLabel(txt)
-            return create("TextLabel", {Size = UDim2.new(1, 0, 0, 25), BackgroundTransparency = 1, Text = txt, TextColor3 = theme.subtext, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = page})
+            local l = create("TextLabel", {Size = UDim2.new(1, 0, 0, 25), BackgroundTransparency = 1, Text = txt, TextColor3 = theme.subtext, Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = page})
+            return {SetText = function(_, new) l.Text = new end}
         end
 
         function Tab:CreateButton(cfg)
@@ -172,7 +187,7 @@ function Library:CreateWindow(cfg)
             local key = cfg.Default
             local k = create("TextButton", {Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = theme.element, Text = "", Parent = page})
             create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = k})
-            local l = create("TextLabel", {Size = UDim2.new(1, -100, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = k})
+            create("TextLabel", {Size = UDim2.new(1, -100, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = k})
             local val = create("TextLabel", {Size = UDim2.new(0, 80, 0, 24), Position = UDim2.new(1, -90, 0.5, -12), BackgroundColor3 = theme.bg, Text = tostring(key):gsub("Enum.KeyCode.", ""), TextColor3 = theme.accent, Font = Enum.Font.GothamBold, TextSize = 11, Parent = k})
             create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = val})
             
@@ -196,8 +211,7 @@ function Library:CreateWindow(cfg)
             create("TextLabel", {Size = UDim2.new(1, -60, 1, 0), Position = UDim2.new(0, 12, 0, 0), BackgroundTransparency = 1, Text = cfg.Name, TextColor3 = theme.text, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = cp})
             local preview = create("Frame", {Size = UDim2.new(0, 30, 0, 20), Position = UDim2.new(1, -40, 0.5, -10), BackgroundColor3 = col, Parent = cp})
             create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = preview})
-            -- Implementação simplificada: apenas clica e muda (num hub real abriria um menu)
-            cp.MouseButton1Click:Connect(function() cfg.Callback(col) end)
+            cp.MouseButton1Click:Connect(function() cfg.Callback(col); preview.BackgroundColor3 = col end)
         end
 
         return Tab
@@ -205,8 +219,47 @@ function Library:CreateWindow(cfg)
     return Window
 end
 
+-- --- FUNÇÕES DE LÓGICA (AIMBOT / ESP) ---
+local function getClosestPlayer()
+    local target = nil
+    local shortestDistance = math.huge
+    local mousePos = UserInputService:GetMouseLocation()
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            if Settings.TeamCheck and p.Team == player.Team then continue end
+            local char = p.Character
+            local part = char:FindFirstChild(Settings.TargetPart)
+            local hum = char:FindFirstChild("Humanoid")
+            if part and hum and hum.Health > 0 then
+                local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    local distFromMouse = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    if distFromMouse <= Settings.FOVRadius then
+                        if distFromMouse < shortestDistance then
+                            target = part
+                            shortestDistance = distFromMouse
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Detectar Tecla de Aim
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.UserInputType == Settings.AimKey or input.KeyCode == Settings.AimKey then isAiming = true end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Settings.AimKey or input.KeyCode == Settings.AimKey then isAiming = false end
+end)
+
 -- --- INICIALIZAÇÃO DA INTERFACE ---
-local Window = Library:CreateWindow({Title = "Xanax Hub V3"})
+-- Isso agora roda na linha ~250, com XanaxLib garantido como definido.
+local Window = XanaxLib:CreateWindow({Title = "Xanax Hub V3"})
 
 local AimTab = Window:CreateTab("Aimbot")
 local VisTab = Window:CreateTab("Visuals")
@@ -214,12 +267,7 @@ local SelfTab = Window:CreateTab("Pessoal")
 local PlayersTab = Window:CreateTab("Jogadores")
 
 -- FOV Circle Drawing
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1
-FOVCircle.NumSides = 100
-FOVCircle.Filled = false
-FOVCircle.Transparency = 1
-FOVCircle.Visible = false
+local FOVCircle = createDrawing("Circle", {Thickness = 1, NumSides = 100, Filled = false, Transparency = 1, Visible = false})
 
 -- Aimbot Configs
 AimTab:CreateToggle({Name = "Aimbot", Default = false, Callback = function(v) Settings.AimbotEnabled = v end})
@@ -228,7 +276,7 @@ AimTab:CreateToggle({Name = "Team Check", Default = false, Callback = function(v
 AimTab:CreateKeybind({Name = "Keybind", Default = Enum.UserInputType.MouseButton2, Callback = function(v) Settings.AimKey = v end})
 AimTab:CreateSlider({Name = "Smoothing", Min = 1, Max = 10, Default = 2, Callback = function(v) Settings.Smoothing = v end})
 AimTab:CreateSlider({Name = "Fov Radius", Min = 50, Max = 500, Default = 100, Callback = function(v) Settings.FOVRadius = v end})
-AimTab:CreateColorPicker({Name = "Fov Color", Default = Settings.FOVColor, Callback = function(v) Settings.FOVColor = v end})
+AimTab:CreateColorPicker({Name = "Fov Color", Default = Settings.FOVColor, Callback = function(v) Settings.FOVColor = v; FOVCircle.Color = v end})
 
 -- Visuals Configs
 VisTab:CreateLabel("Componentes Visuais")
@@ -252,12 +300,29 @@ PlayersTab:CreateButton({Name = "Teleport", Callback = function()
     end
 end})
 
--- Lógica de Espectar e Loop (Simplificada no Main Loop)
+-- --- LOOP PRINCIPAL ---
 RunService.RenderStepped:Connect(function()
+    -- FOV Logic
     FOVCircle.Visible = Settings.ShowFOV
     FOVCircle.Radius = Settings.FOVRadius
-    FOVCircle.Color = Settings.FOVColor
     FOVCircle.Position = UserInputService:GetMouseLocation()
     
-    -- Lógica de mira e ESP viria aqui seguindo seu script original...
+    -- Aimbot Logic
+    if Settings.AimbotEnabled and isAiming then
+        local target = getClosestPlayer()
+        if target then
+            local screenPos, onScreen = camera:WorldToViewportPoint(target.Position)
+            if onScreen then
+                local mousePos = UserInputService:GetMouseLocation()
+                local moveX = (screenPos.X - mousePos.X) / Settings.Smoothing
+                local moveY = (screenPos.Y - mousePos.Y) / Settings.Smoothing
+                if mousemoverel then
+                    mousemoverel(moveX, moveY)
+                end
+            end
+        end
+    end
+
+    -- ESP Logic (Resumo para performance)
+    -- Para cada jogador, você usaria o Cache[p] para atualizar os desenhos 2D aqui.
 end)
